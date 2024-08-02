@@ -1,31 +1,100 @@
 #!/usr/bin/python3
-"""
-Pascal's triangle module
-"""
+"""N Queens placement on NxN chessboard"""
 
 
-def pascal_triangle(n):
-    """ Pascal's triangle generator using addition
-        Args:
-            - n: levels of pascal triangle
-        Return:
-            - Integer matrix representing pascal triangle
+import sys
+
+
+def generate_solutions(row, column):
     """
-    if n <= 0:
-        return []
+    solve a simple N x N matrix
+    Args:
+        row (int): Number of rows
+        column (int): Number of columns
+    Returns:
+        returns a list of lists
+    """
+    solution = [[]]
+    for queen in range(row):
+        solution = place_queen(queen, column, solution)
+    return solution
 
-    pascal_triangle = []
-    prev_row = []
-    for row in range(n):
-        new_row = []
-        for num in range(row + 1):
-            if num == 0:
-                new_row.append(1)
-                continue
-            try:
-                new_row.append(prev_row[num - 1] + prev_row[num])
-            except IndexError:
-                new_row.append(1)
-        prev_row = new_row
-        pascal_triangle.append(new_row)
-    return pascal_triangle
+
+def place_queen(queen, column, prev_solution):
+    """
+    Place the queen at a certain position
+    Args:
+        queen (int): The queen
+        column (int): The column to move
+        prev_solution (list): the previous move
+    Returns:
+        returns a list
+    """
+    safe_position = []
+    for array in prev_solution:
+        for x in range(column):
+            if is_safe(queen, x, array):
+                safe_position.append(array + [x])
+    return safe_position
+
+
+def is_safe(q, x, array):
+    """
+    check if it's safe to make a move
+    Args:
+        q (int): row to move to
+        x (int): column to move to
+        array (array): the matrix
+    Returns:
+        returns a boolean
+    """
+    if x in array:
+        return (False)
+    else:
+        return all(abs(array[column] - x) != q - column
+                   for column in range(q))
+
+
+def init():
+    """
+    Lets initialize the game shall we?
+    Args:
+        this function doesn't take any args
+    Returns:
+        returns an integer
+    """
+    if len(sys.argv) != 2:
+        print("Usage: nqueens N")
+        sys.exit(1)
+    if sys.argv[1].isdigit():
+        n = int(sys.argv[1])
+    else:
+        print("N must be a number")
+        sys.exit(1)
+    if n < 4:
+        print("N must be at least 4")
+        sys.exit(1)
+    return (n)
+
+
+def n_queens():
+    """
+    The main entry point
+    Args:
+        can be called without passing args
+    Returns:
+        returns None
+    Example
+    -----------------------
+    """
+    n = init()
+    solutions = generate_solutions(n, n)
+    for array in solutions:
+        clean = []
+        for q, x in enumerate(array):
+            clean.append([q, x])
+        print(clean)
+
+
+if __name__ == '__main__':
+    n_queens()
