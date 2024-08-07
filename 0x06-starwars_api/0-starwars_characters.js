@@ -1,53 +1,39 @@
 #!/usr/bin/node
 
+// Import the 'request' library
 const request = require('request');
 
-const movieId = process.argv[2];
-const filmEndPoint = 'https://swapi-api.hbtn.io/api/films/' + movieId;
-let people = [];
-const names = [];
+// Define constant with the base URL of the Star Wars API
+const API_URL = 'https://swapi-api.alx-tools.com/api';
 
-const requestCharacters = async () => {
-  await new Promise(resolve => request(filmEndPoint, (err, res, body) => {
-    if (err || res.statusCode !== 200) {
-      console.error('Error: ', err, '| StatusCode: ', res.statusCode);
-    } else {
-      const jsonBody = JSON.parse(body);
-      people = jsonBody.characters;
-      resolve();
+// Check if the number of command line arguments is greater than 2
+if (process.argv.length > 2) {
+  // Make a request to the film resource for the specified film ID
+  request(`${API_URL}/films/${process.argv[2]}/`, (err, _, body) => {
+    // If an error occurred during the request, log the error
+    if (err) {
+      console.log(err);
     }
-  }));
-};
+    // Get the characters URL from the film's response body
+    const charactersURL = JSON.parse(body).characters;
 
-const requestNames = async () => {
-  if (people.length > 0) {
-    for (const p of people) {
-      await new Promise(resolve => request(p, (err, res, body) => {
-        if (err || res.statusCode !== 200) {
-          console.error('Error: ', err, '| StatusCode: ', res.statusCode);
-        } else {
-          const jsonBody = JSON.parse(body);
-          names.push(jsonBody.name);
-          resolve();
-        }
+    // Create an array of Promises that resolve with the names of the characters
+    const charactersName = charactersURL.map(
+      url => new Promise((resolve, reject) => {
+        // Make a request to the character resource
+        request(url, (promiseErr, __, charactersReqBody) => {
+          // If an error occurred during the request, reject the Promise with the error
+          if (promiseErr) {
+            reject(promiseErr);
+          }
+          // Resolve the Promise with the name of the character
+          resolve(JSON.parse(charactersReqBody).name);
+        });
       }));
-    }
-  } else {
-    console.error('Error: Got no Characters for some reason');
-  }
-};
 
-const getCharNames = async () => {
-  await requestCharacters();
-  await requestNames();
-
-  for (const n of names) {
-    if (n === names[names.length - 1]) {
-      process.stdout.write(n);
-    } else {
-      process.stdout.write(n + '\n');
-    }
-  }
-};
-
-getCharNames();
+    // Wait for all Promises to resolve and log the names of the characters, separated by new lines
+    Promise.all(charactersName)
+      .then(names => console.log(names.join('\n')))
+      .catch(allErr => console.log(allErr));
+  });
+}
